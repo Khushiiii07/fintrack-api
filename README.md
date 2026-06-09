@@ -9,7 +9,7 @@ A full-stack, responsive personal finance ecosystem. The system features an auto
 ###  Smart Analytics Dashboard & Budget Metrics
 Here is the core analytical layout tracking transactions, categorical breakdowns, and active budget statuses:
 
-![FinTrack Dashboard](dashboard-preview.png)
+![FinTrack Dashboard](image.png)
 
 ---
 
