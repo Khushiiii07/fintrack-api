@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTrack - Premium Voice AI Suite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-surface-hover: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --color-balance: #38bdf8;
+            --color-income: #4ade80;
+            --color-expense: #f87171;
+            --color-warning: #fbbf24;
+            --border-color: #334155;
+            --accent-glow: rgba(56, 189, 248, 0.15);
+            --color-mic-active: #ef4444;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-primary); 
+            margin: 0; 
+            padding: 30px; 
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .dashboard-layout {
+            max-width: 1350px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 30px;
+        }
+
+        /* Sidebar Panel */
+        .sidebar {
+            background: var(--bg-surface);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            height: fit-content;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        h2 { 
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main); 
+            margin: 0;
+        }
+
+        /* Main Workspace Panel */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* Premium Cards Matrix */
+        .summary-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px; 
+        }
+        
+        .card { 
+            background: var(--bg-surface);
+            padding: 22px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+        }
+
+        .card-title { 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        
+        .card-value { 
+            font-size: 28px; 
+            font-weight: 700; 
+            margin-top: 8px; 
+        }
+
+        .card-balance { color: var(--color-balance); }
+        .card-income { color: var(--color-income); }
+        .card-expense { color: var(--color-expense); }
+
+        .card-budget-warning { border-color: var(--color-warning) !important; box-shadow: 0 0 15px rgba(251, 191, 36, 0.15) !important; }
+        .card-budget-critical { border-color: var(--color-expense) !important; box-shadow: 0 0 15px rgba(248, 113, 113, 0.25) !important; background: linear-gradient(135deg, #1e293b 0%, #451a1a 100%) !important; }
+
+        #budget-alert-badge { display: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; margin-top: 10px; text-align: center; }
+
+        /* Voice Component Container */
+        .voice-box {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px dashed var(--border-color);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mic-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+            flex-shrink: 0;
+        }
+
+        .mic-btn.listening {
+            background: var(--color-mic-active);
+            animation: pulse-mic 1.5s infinite;
+            box-shadow: 0 0 15px var(--color-mic-active);
+        }
+
+        @keyframes pulse-mic {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .voice-status {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        /* Chart Section */
+        .chart-container { background: var(--bg-primary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .chart-header { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 15px; font-weight: 600; text-align: center; }
+
+        /* Form Controls Setup */
+        .form-section h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin: 0 0 15px 0; }
+        .input-stack { display: flex; flex-direction: column; gap: 12px; }
+        .input-field { background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 14px; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+        .input-field:focus { border-color: var(--color-balance); }
+        select.input-field { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-size: 16px; }
+        
+        .filter-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; align-items: center; }
+        .date-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; display: block; font-weight: 600; }
+
+        .btn-submit { background: var(--color-income); color: var(--bg-primary); border: none; padding: 13px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+
+        /* Table Interface */
+        .table-container { background: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 16px 20px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: rgba(15, 23, 42, 0.4); color: var(--text-muted); font-weight: 600; font-size: 13px; }
+        
+        .badge { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .badge-income { background: rgba(74, 222, 128, 0.15); color: var(--color-income); }
+        .badge-expense { background: rgba(248, 113, 113, 0.15); color: var(--color-expense); }
+        
+        .delete-btn { background: rgba(248, 113, 113, 0.1); color: var(--color-expense); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(248, 113, 113, 0.2); cursor: pointer; font-size: 12px; font-weight: 600; }
+        .delete-btn:hover { background: var(--color-expense); color: var(--bg-primary); }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+    
+    <div class="sidebar">
+        <div>
+            <h2>📊 FinTrack AI</h2>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0 0 0;">
+        </div>
+
+        <div class="voice-box">
+            <button id="mic-trigger" class="mic-btn" onclick="toggleVoiceListening()">🎙️</button>
+            <div class="voice-status" id="voice-status-msg">
+                <span style="color: var(--text-main); font-weight:600; display:block; margin-bottom:2px;">AI Voice Assistant</span>
+                Click the mic and say: <br><em>"Spent 200 on lunch"</em>
+            </div>
+        </div>
+        
+        <div class="form-section" style="background: rgba(15, 23, 42, 0.2); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <h3>Budget Target Limit</h3>
+            <div class="input-stack">
+                <input type="number" id="budget-limit" class="input-field" value="2000" oninput="evaluateBudgetGlow()">
+            </div>
+            <div id="budget-alert-badge"></div>
+        </div>
+
+        <div class="form-section">
+            <h3>New Transaction</h3>
+            <div class="input-stack">
+                <select id="type" class="input-field">
+                    <option value="EXPENSE">Expense (➖)</option>
+                    <option value="INCOME">Income (➕)</option>
+                </select>
+                <input type="text" id="desc" class="input-field" placeholder="Description">
+                <input type="number" id="amount" class="input-field" placeholder="Amount ($)" step="0.01">
+                <select id="category" class="input-field">
+                    <option value="Food">Food</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Salary">Salary</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Other">Other</option>
+                </select>
+                <button class="btn-submit" onclick="addTransaction()">Save Transaction</button>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">Expense Breakdown</div>
+            <div style="max-width: 200px; margin: 0 auto;">
+                <canvas id="expenseChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="summary-grid">
+            <div class="card">
+                <div class="card-title">Net Balance</div>
+                <div class="card-value card-balance" id="net-balance">$0.00</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total Income</div>
+                <div class="card-value card-income" id="total-income">$0.00</div>
+            </div>
+            <div class="card" id="expense-card-frame">
+                <div class="card-title">Total Expenses</div>
+                <div class="card-value card-expense" id="total-expense">$0.00</div>
+            </div>
+        </div>
+
+        <div class="filter-row">
+            <div>
+                <span class="date-label">Search Ledger</span>
+                <input type="text" id="search" class="input-field" style="width:100%; box-sizing:border-box;" placeholder="🔍 Filter rows instantly..." oninput="applyAllFilters()">
+            </div>
+            <div>
+                <span class="date-label">From Date</span>
+                <input type="date" id="date-from" class="input-field" style="width:100%; box-sizing:border-box;" onchange="applyAllFilters()">
+            </div>
+            <div>
+                <span class="date-label">To Date</span>
+                <input type="date" id="date-to" class="input-field" style="width:100%; box-sizing:border-box;" onchange="applyAllFilters()">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Timestamp Date</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="transaction-rows"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:9090/api/transactions";
+    let allTransactions = []; 
+    let expenseChartInstance = null;
+    let globalTotalExpenses = 0;
+    let voiceRecognitionEngine = null;
+    let isVoiceListeningActive = false;
+
+    // Initialize Web Speech Recognition API
+    function initVoiceRecognition() {
+        const SpeechClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechClass) {
+            document.getElementById("voice-status-msg").innerHTML = "<span style='color:var(--color-expense)'>Voice API Not Supported in this browser.</span>";
+            return;
+        }
+        voiceRecognitionEngine = new SpeechClass();
+        voiceRecognitionEngine.continuous = false;
+        voiceRecognitionEngine.lang = 'en-US';
+        voiceRecognitionEngine.interimResults = false;
+
+        voiceRecognitionEngine.onstart = () => {
+            isVoiceListeningActive = true;
+            document.getElementById("mic-trigger").className = "mic-btn listening";
+            document.getElementById("voice-status-msg").innerHTML = "<span style='color:var(--color-income); font-weight:600;'>Listening actively...</span><br>Speak natural phrase now.";
+        };
+
+        voiceRecognitionEngine.onend = () => {
+            isVoiceListeningActive = false;
+            document.getElementById("mic-trigger").className = "mic-btn";
+        };
+
+        voiceRecognitionEngine.onresult = async (event) => {
+            const voiceResultText = event.results[0][0].transcript;
+            document.getElementById("voice-status-msg").innerHTML = `Parsed: "<em>${voiceResultText}</em>"`;
+            await processVoiceSyntax(voiceResultText);
+        };
+    }
+
+    function toggleVoiceListening() {
+        if (!voiceRecognitionEngine) initVoiceRecognition();
+        if (!voiceRecognitionEngine) return;
+        
+        if (isVoiceListeningActive) voiceRecognitionEngine.stop();
+        else voiceRecognitionEngine.start();
+    }
+
+    // Smart Voice Natural Language Processing Parser
+    async function processVoiceSyntax(phraseText) {
+        const textLower = phraseText.toLowerCase();
+        
+        // Extract numbers dynamically using regular expressions
+        const extractedNumbers = textLower.match(/\d+(\.\d+)?/);
+        if (!extractedNumbers) {
+            alert("Could not pull out a valid amount from speech phrase! Give it another try.");
+            resetVoiceHint();
+            return;
+        }
+        const numericAmount = parseFloat(extractedNumbers[0]);
+
+        // Auto-detect transaction type rules
+        let computedType = "EXPENSE"; // Default fallback
+        if (textLower.includes("earned") || textLower.includes("received") || textLower.includes("income") || textLower.includes("salary") || textLower.includes("stipend")) {
+            computedType = "INCOME";
+        }
+
+        // Smart Category Selection Mapping
+        let assignedCategory = "Other";
+        if (textLower.includes("lunch") || textLower.includes("dinner") || textLower.includes("food") || textLower.includes("pizza") || textLower.includes("coffee") || textLower.includes("starbucks")) {
+            assignedCategory = "Food";
+        } else if (textLower.includes("movie") || textLower.includes("game") || textLower.includes("ticket") || textLower.includes("entertainment")) {
+            assignedCategory = "Entertainment";
+        } else if (textLower.includes("salary") || textLower.includes("stipend") || textLower.includes("bonus")) {
+            assignedCategory = "Salary";
+        } else if (textLower.includes("rent")) {
+            assignedCategory = "Rent";
+        } else if (textLower.includes("electric") || textLower.includes("bill") || textLower.includes("utilities")) {
+            assignedCategory = "Utilities";
+        }
+
+        // Generate clean description string by stripping out boilerplate phrase words
+        let cleanDescription = phraseText.replace(/spent|earned|received|on|for|at/gi, "").replace(/\d+/g, "").trim();
+        // Capitalize front character
+        if(cleanDescription.length > 0) {
+            cleanDescription = cleanDescription.charAt(0).toUpperCase() + cleanDescription.slice(1);
+        } else {
+            cleanDescription = computedType === "INCOME" ? "Voice Income Entry" : "Voice Expense Entry";
+        }
+
+        // Auto-populate sidebar control panel elements for visual confirmation
+        document.getElementById("type").value = computedType;
+        document.getElementById("desc").value = cleanDescription;
+        document.getElementById("amount").value = numericAmount;
+        document.getElementById("category").value = assignedCategory;
+
+        // Automatically push transaction into H2 persistent memory!
+        await addTransaction();
+        
+        setTimeout(resetVoiceHint, 4000);
+    }
+
+    function resetVoiceHint() {
+        document.getElementById("voice-status-msg").innerHTML = `<span style="color: var(--text-main); font-weight:600; display:block; margin-bottom:2px;">AI Voice Assistant</span>Click the mic and say: <br><em>"Spent 200 on lunch"</em>`;
+    }
+
+    async function loadTransactions() {
+        const response = await fetch(API_URL);
+        allTransactions = await response.json();
+        calculateMetrics(allTransactions);
+        updateChartMetrics(allTransactions);
+        applyAllFilters();
+    }
+
+    function calculateMetrics(data) {
+        let income = 0;
+        let expense = 0;
+        
+        data.forEach(t => {
+            if (t.type === "INCOME") income += t.amount;
+            else expense += t.amount;
+        });
+        
+        globalTotalExpenses = expense;
+        document.getElementById("total-income").innerText = `$${income.toFixed(2)}`;
+        document.getElementById("total-expense").innerText = `$${expense.toFixed(2)}`;
+        
+        const net = income - expense;
+        const netElement = document.getElementById("net-balance");
+        netElement.innerText = (net >= 0 ? "" : "-") + `$${Math.abs(net).toFixed(2)}`;
+        netElement.style.color = net >= 0 ? "#4ade80" : "#f87171";
+
+        evaluateBudgetGlow();
+    }
+
+    function evaluateBudgetGlow() {
+        const limitInput = document.getElementById("budget-limit").value;
+        const budgetLimit = parseFloat(limitInput);
+        const expenseCard = document.getElementById("expense-card-frame");
+        const alertBadge = document.getElementById("budget-alert-badge");
+
+        if (isNaN(budgetLimit) || budgetLimit <= 0) {
+            expenseCard.className = "card";
+            alertBadge.style.display = "none";
+            return;
+        }
+
+        const warningThreshold = budgetLimit * 0.8;
+
+        if (globalTotalExpenses >= budgetLimit) {
+            expenseCard.className = "card card-budget-critical";
+            alertBadge.style.display = "block";
+            alertBadge.innerText = "❌ BUDGET EXCEEDED";
+            alertBadge.style.background = "rgba(248, 113, 113, 0.15)";
+            alertBadge.style.color = "var(--color-expense)";
+        } else if (globalTotalExpenses >= warningThreshold) {
+            expenseCard.className = "card card-budget-warning";
+            alertBadge.style.display = "block";
+            alertBadge.innerText = "⚠️ APPROACHING LIMIT (80%+)";
+            alertBadge.style.background = "rgba(251, 191, 36, 0.15)";
+            alertBadge.style.color = "var(--color-warning)";
+        } else {
+            expenseCard.className = "card";
+            alertBadge.style.display = "block";
+            alertBadge.innerText = "✅ BUDGET IN GOOD STANDING";
+            alertBadge.style.background = "rgba(74, 222, 128, 0.15)";
+            alertBadge.style.color = "var(--color-income)";
+        }
+    }
+
+    function updateChartMetrics(data) {
+        const categories = ["Food", "Entertainment", "Rent", "Utilities", "Other"];
+        const values = [0, 0, 0, 0, 0];
+
+        data.forEach(t => {
+            if (t.type === "EXPENSE") {
+                const idx = categories.indexOf(t.category);
+                if (idx !== -1) values[idx] += t.amount;
+            }
+        });
+
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        if (expenseChartInstance) { expenseChartInstance.destroy(); }
+
+        expenseChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: categories,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#f87171', '#fbbf24', '#60a5fa', '#c084fc', '#94a3b8'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                cutout: '78%'
+            }
+        });
+    }
+
+    function applyAllFilters() {
+        const searchQuery = document.getElementById("search").value.toLowerCase();
+        const fromDateVal = document.getElementById("date-from").value;
+        const toDateVal = document.getElementById("date-to").value;
+
+        const targetFrom = fromDateVal ? new Date(fromDateVal + "T00:00:00") : null;
+        const targetTo = toDateVal ? new Date(toDateVal + "T23:59:59") : null;
+
+        const filtered = allTransactions.filter(t => {
+            const matchesText = t.description.toLowerCase().includes(searchQuery) || 
+                                t.category.toLowerCase().includes(searchQuery);
+
+            const txDate = new Date(t.date);
+            let matchesDate = true;
+            if (targetFrom && txDate < targetFrom) matchesDate = false;
+            if (targetTo && txDate > targetTo) matchesDate = false;
+
+            return matchesText && matchesDate;
+        });
+
+        renderTable(filtered);
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById("transaction-rows");
+        tbody.innerHTML = "";
+        
+        data.forEach(t => {
+            const isInc = t.type === "INCOME";
+            const formattedDate = new Date(t.date).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric'
+            });
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="color: var(--text-muted); font-size: 13px;">#${t.id}</td>
+                    <td style="color: var(--text-muted); font-size: 13.5px; font-weight: 500;">${formattedDate}</td>
+                    <td><strong style="color: var(--text-main); font-weight: 600;">${t.description}</strong></td>
+                    <td><span class="badge ${isInc ? 'badge-income' : 'badge-expense'}">${t.type}</span></td>
+                    <td style="color: var(--text-muted); font-size: 14px;">${t.category}</td>
+                    <td style="color: ${isInc ? 'var(--color-income)' : 'var(--color-expense)'}; font-weight: 700;">
+                        ${isInc ? '+' : '-'}$${t.amount.toFixed(2)}
+                    </td>
+                    <td><button class="delete-btn" onclick="deleteTransaction(${t.id})">Remove</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    async function addTransaction() {
+        const type = document.getElementById("type").value;
+        const description = document.getElementById("desc").value;
+        const amount = parseFloat(document.getElementById("amount").value);
+        const category = document.getElementById("category").value;
+
+        if (!description || isNaN(amount)) {
+            return;
+        }
+
+        await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ description, amount, category, type })
+        });
+
+        document.getElementById("desc").value = "";
+        document.getElementById("amount").value = "";
+        loadTransactions();
+    }
+
+    async function deleteTransaction(id) {
+        if(confirm("Confirm entry removal?")) {
+            await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+            loadTransactions();
+        }
+    }
+
+    loadTransactions();
+    initVoiceRecognition();
+</script>
+
+</body>
+</html>
